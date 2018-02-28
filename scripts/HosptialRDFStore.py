@@ -1,41 +1,83 @@
 import csv
-import rdflib
+from rdflib import Graph, Literal, BNode, Namespace, RDF, URIRef
+from rdflib.namespace import DC, FOAF, RDFS, RDF
+from rdflib.plugins.stores import sparqlstore
 
 
-with open("C:/Users\philn\PycharmProjects\HackerBoyOscar-Co\scripts\Hospital.csv") as csvfile:
+#Stardog store setup
+endpoint = 'http://localhost:5820/demo/query'
+store = sparqlstore.SPARQLUpdateStore()
+store.open((endpoint, endpoint))
+
+
+g = Graph(store, identifier=hospitalURI)
+#g = Graph(); #default Graph
+
+#Namespaces
+DBO = Namespace("http://dbpedia.org/ontology/")
+SCHEMA = Namespace("http://schema.org/")
+g.bind("dc", DC)
+g.bind("foaf", FOAF)
+g.bind("dbo", DBO)
+g.bind("schema", SCHEMA)
+
+#Literals (predeterminded datasets)
+phone = BNode() #Figure out which data you want o store in the BNode
+hosptial = BNode() #Figure out which data you want o store in the BNode
+
+
+# Structuring the CSV data
+with open("C:/Users\philn\PycharmProjects\HackerBoyOscar-Co\CSV\Hospital.csv") as csvfile:
     readCSV = csv.reader(csvfile, delimiter = '\t')
 
     for row in readCSV:
-        hospital_data =[
-         row[0], #org ID
-         row[1], #org code
-         row[2], #org type
-         row[3], #subType
-         row[4], #org status
-         row[5],  #Sector
-         row[6], #org statu 2
-         row[7], #isPimMang
-         row[8], #Org name
-         row[9], #Address 1
-         row[10], #Address 2
-         row[11], #Address 3
-         row[12], #City
-         row[13], #Country
-         row[14], #Postal Code
-         row[15], #Lat
-         row[16], #Long
-         row[17], #AprentODSCode
-         row[18], #ParentName
-         row[19], #Phone
-         row[20], #email
-         row[21], #Website
+        org_id = Literal(row[0].replace(" ", "_")) #int
+        org_code = Literal(row[1].replace(" ", "_")) #String
+        org_type = Literal(row[2].replace(" ", "_")) #String
+        sub_type = Literal(row[3].replace(" ", "_")) #String aka Menatal Hosptial, Vet
+        sector = Literal(row[4].replace(" ", "_")) #String
+        org_status = Literal(row[5].replace(" ", "_")) #String
+        isPimMang = Literal(row[6].replace(" ", "_")) #Boolean
+        org_Name = Literal(row[7].replace(" ", "_")) #String
+        address1 = Literal(row[8].replace(" ", "_")) #String
+        address2  = Literal(row[9].replace(" ", "_")) #String
+        address3 = Literal(row[10].replace(" ", "_")) #String
+        city = Literal(row[11].replace(" ", "_")) #String
+        county = Literal(row[12].replace(" ", "_")) #String
+        zip_code = Literal(row[13].replace(" ", "_")) #String
+        lat = Literal(row[14].replace(" ", "_")) #float
+        long = Literal(row[15].replace(" ", "_")) #float
+        parent_ODS_Code = Literal(row[16].replace(" ", "_")) #String
+        parent_Name = Literal(row[17].replace(" ", "_")) #String
+        phone = Literal(row[18].replace(" ", "_")) #int String?
+        email = Literal(row[19].replace(" ", "_"))#String
+        website = Literal(row[20].replace(" ", "_")) #String
+        fax = Literal(row[21].replace(" ", "_")) #String
 
-         ]
-        #org_ID = row[0]
-        #org_code = row[2]
+        hospitalURI = URIRef('http://example.com/hosptial/') + org_id
 
-        print(hospital_data)
+        #Adding the triples (Name, phone, county, city and address)
+        g.add((hospitalURI, RDF.type, FOAF.Organization))
+        g.add((hospitalURI, FOAF.givename, org_Name))
+        g.add((hospitalURI, FOAF.phone, phone))
+        g.add((hospitalURI, FOAF.mbox, email))
+        g.add((hospitalURI, SCHEMA.hospitial, org_type))
+        g.add((hospitalURI,SCHEMA.hospitial,sub_type))
+        g.add((hospitalURI,DBO.address, address1))
+        g.add((hospitalURI,DBO.location, city))
+        g.add((hospitalURI,DBO.state, county))
 
-#print (readCSV) Loops through data table
+
+        #for s, p, o in g:
+        #   print((s, p, o))
+
+        print(g.serialize(format='turtle'))
+
+        g.serialize(destination="test.ttl",format="turtle")
+
+        
+
+
+
 
 
